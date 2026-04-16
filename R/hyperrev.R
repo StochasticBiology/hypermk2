@@ -281,7 +281,11 @@ hypermk2 = function(m,
   statesbin = sapply(stateset, DecToBinS, len=L)
   onecounts = as.vector(sapply(statesbin, stringr::str_count, "1"))
   for (walk in 1:nwalker) {
-    state = mk.rev.df$From[sample(1:nrow(mk.rev.df), 1)]
+    if(force.origin == TRUE) {
+      state = zero.state
+    } else {
+      state = mk.rev.df$From[sample(1:nrow(mk.rev.df), 1)]
+    }
     for (t in 1:(2 * L)) {
       trans = fit.model$transition_matrix[state, ]
       trans[state] = 0
@@ -306,6 +310,7 @@ hypermk2 = function(m,
   hyperfit = list(mk2_fluxes = r.df,
                   fitted_mk = fit.model,
                   L = L,
+                  force.origin = force.origin,
                   feature.names = colnames(m))
 
   return(hyperfit)
