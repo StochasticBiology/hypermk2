@@ -87,6 +87,7 @@ min_sum_hamming_three_lists <- function(lst1, lst2) {
 #' @param m A matrix of binary observations. Each row should correspond to the ith tree tip observation.
 #' @param tree A phylogenetic tree linking observations.
 #' @param nwalker Integer (default 10000), the number of random walkers to simulate on the inferred transition network to sample fluxes
+#' @param force.origin Boolean (default FALSE), whether to force the root of the tree to have state 0^L
 #'
 #' @return A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, and feature names
 #' @examples
@@ -94,7 +95,10 @@ min_sum_hamming_three_lists <- function(lst1, lst2) {
 #' tree = ape::rtree(3)
 #' hypermk2(data, tree)
 #' @export
-hypermk2 = function(m, tree, nwalker=10000) {
+hypermk2 = function(m,
+                    tree,
+                    nwalker=10000,
+                    force.origin = FALSE) {
   verbose = FALSE
   n = length(tree$tip.label)
   pset = list()
@@ -195,6 +199,10 @@ hypermk2 = function(m, tree, nwalker=10000) {
                                     To=bin_to_dec(pset[[d[[1]]]])))
     trans = rbind(trans, data.frame(From=bin_to_dec(pset[[noderef]]),
                                     To=bin_to_dec(pset[[d[[2]]]])))
+    if(force.origin == TRUE) {
+      trans = rbind(trans, data.frame(From=0,
+                                      To=bin_to_dec(pset[[noderef]])))
+    }
   }
   trans = trans[trans$From != trans$To,]
 
@@ -208,6 +216,7 @@ hypermk2 = function(m, tree, nwalker=10000) {
     statetrans = rbind(statetrans, data.frame(From=this.from, To=this.to))
   }
   statetrans = unique(statetrans)
+  zero.state = which(stateset == 0)
 
   # relabel observations on the original dataset
   stateobs = c()
@@ -230,8 +239,16 @@ hypermk2 = function(m, tree, nwalker=10000) {
   rate_model = Q
   message(Nstates, " states, ", length(which(as.vector(Q) != 0)), " transitions")
   message("Fitting Mk model...")
+  if(force.origin == TRUE) {
+    root_prior = rep(0, Nstates)
+    root_prior[zero.state] = 1
   fit.model = castor::fit_mk(trees = trees, Nstates = Nstates,
+                             root_prior = root_prior,
                              tip_states = stateobs, rate_model = Q)
+  } else {
+    fit.model = castor::fit_mk(trees = trees, Nstates = Nstates,
+                               tip_states = stateobs, rate_model = Q)
+  }
   if(FALSE) {
     fit.model = castor::fit_mk(trees = trees, Nstates = Nstates,
                                tip_states = stateobs, rate_model = "ARD")
@@ -264,7 +281,7 @@ hypermk2 = function(m, tree, nwalker=10000) {
   statesbin = sapply(stateset, DecToBinS, len=L)
   onecounts = as.vector(sapply(statesbin, stringr::str_count, "1"))
   for (walk in 1:nwalker) {
-    state = which(onecounts == min(onecounts))[1]
+    state = mk.rev.df$From[sample(1:nrow(mk.rev.df), 1)]
     for (t in 1:(2 * L)) {
       trans = fit.model$transition_matrix[state, ]
       trans[state] = 0
