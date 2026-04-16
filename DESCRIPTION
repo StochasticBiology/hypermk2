@@ -2,15 +2,17 @@ Package: hypermk2
 Type: Package
 Title: Hypercubic Mk Model 2 for larger reversible evolutionary accumulation modelling 
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: Iain Johnston
+Maintainer: Iain Johnston <iain.johnston@uib.no>
+Description: Strips down state spaces in a hypercubic Mk model.
+    Then fits the Mk model over this reduced state space.
+    Builds on ideas from hypermk.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Imports:
     hypermk,
+    castor,
     ape,
     phangorn,
     stringr
