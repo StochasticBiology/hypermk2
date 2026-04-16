@@ -1,0 +1,19 @@
+Package: hypermk2
+Type: Package
+Title: Hypercubic Mk Model 2 for larger reversible evolutionary accumulation modelling 
+Version: 0.1.0
+Author: Who wrote it
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports:
+    hypermk,
+    ape,
+    phangorn,
+    stringr
+Remotes:
+    StochasticBiology/hypermk
+RoxygenNote: 7.3.2
