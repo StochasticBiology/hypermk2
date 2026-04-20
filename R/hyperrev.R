@@ -82,14 +82,97 @@ min_sum_hamming_three_lists <- function(lst1, lst2) {
   )
 }
 
+# given two lists of binary vectors, return a list of binary vectors
+# that minimise the sum of irreversible 0->1 changes to an element of the two
+# lists. in other words the set of i for which argmax_j(i,list1[j])
+# + argmax_k(i, list2[k]) takes a minimum value. also return the
+# subsets of the two lists containing the js and ks
+min_irreversible_ancestor <- function(lst1, lst2) {
+  # helper to deduplicate list of vectors
+  dedup_vecs <- function(lst) {
+    keys <- sapply(lst, paste0, collapse = "")
+    lst[!duplicated(keys)]
+  }
+
+  results <- list()
+  scores <- c()
+  idx <- 1
+
+  for (i in seq_along(lst1)) {
+    for (j in seq_along(lst2)) {
+      v1 <- lst1[[i]]
+      v2 <- lst2[[j]]
+
+      anc <- pmin(v1, v2)   # bitwise AND
+      score <- sum(anc)     # maximize number of 1's
+
+      results[[idx]] <- list(
+        i = anc,
+        j = v1,
+        k = v2,
+        score = score
+      )
+      scores[idx] <- score
+      idx <- idx + 1
+    }
+  }
+
+  # keep optimal
+  max_score <- max(scores)
+  best <- results[scores == max_score]
+
+  # collect outputs
+  i_list <- lapply(best, `[[`, "i")
+  w1 <- lapply(best, `[[`, "j")
+  w2 <- lapply(best, `[[`, "k")
+
+  list(
+    i_list = dedup_vecs(i_list),
+    lst1_witness = dedup_vecs(w1),
+    lst2_witness = dedup_vecs(w2),
+    score = max_score
+  )
+}
+
+#' Get statistics of a null model fit of independent features
+#'
+#' @param m A matrix of binary observations. Each row should correspond to the ith tree tip observation.
+#' @param tree A phylogenetic tree linking observations.
+#' @param ... other parameters to pass to hypermk2
+#'
+#' @return A named list containing total and feature-specific likelihoods and AICs
+#' @examples
+#' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
+#' tree = ape::rtree(3)
+#' hypermk2_independent(data, tree)
+#' @export
+hypermk2_independent = function(m,
+                                tree,
+                                ...) {
+  res.df = data.frame()
+  for(i in 1:ncol(m)) {
+    this.f = matrix(m[,i], ncol=1)
+    if(sum(this.f) != 0 & sum(this.f) != nrow(m)) {
+      this.fit = hypermk2(this.f, tree, nwalker = 1, ...)
+      res.df = rbind(res.df, data.frame(feature=i, loglik = this.fit$fitted_mk$loglikelihood, AIC = this.fit$fitted_mk$AIC))
+    }
+  }
+#  res.df = rbind(res.df, data.frame(feature=0, loglik=sum(res.df$loglik), AIC=sum(res.df$AIC)))
+  return(list(loglik =sum(res.df$loglik),
+              AIC = sum(res.df$AIC),
+              by.feature = res.df))
+}
+
 #' Use HyperMk2 to fit a reversible evolutionary accumulation model
 #'
 #' @param m A matrix of binary observations. Each row should correspond to the ith tree tip observation.
 #' @param tree A phylogenetic tree linking observations.
+#' @param reversible Boolean (default TRUE) whether to allow reversible transitions
 #' @param nwalker Integer (default 10000), the number of random walkers to simulate on the inferred transition network to sample fluxes
 #' @param force.origin Boolean (default FALSE), whether to force the root of the tree to have state 0^L
+#' @param compare.null Boolean (default FALSE), whether to compare a null model of independent characters
 #'
-#' @return A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, and feature names
+#' @return A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, set of transitions in the reduced space, and feature names
 #' @examples
 #' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
 #' tree = ape::rtree(3)
@@ -97,10 +180,31 @@ min_sum_hamming_three_lists <- function(lst1, lst2) {
 #' @export
 hypermk2 = function(m,
                     tree,
+                    reversible = TRUE,
                     nwalker=10000,
-                    force.origin = FALSE) {
+                    force.origin = FALSE,
+                    compare.null = FALSE) {
   verbose = FALSE
   n = length(tree$tip.label)
+  L = ncol(m)
+
+  bin_to_dec <- function(x) {
+    sum(x * 2^((length(x)-1):0))
+  }
+  binS_to_dec <- function(x) {
+    x = as.numeric(strsplit(x, "")[[1]])
+    sum(x * 2^((length(x)-1):0))
+  }
+
+  if(reversible == FALSE) {
+    mstr = apply(m, 1, paste0, collapse = "")
+    arb = hyperdags::simplest_arborescence(mstr)
+    g = arb$rewired.graph
+    edges = igraph::as_data_frame(g, what = "edges")
+    colnames(edges) = c("From", "To")
+    trans = as.data.frame(apply(edges, c(1,2), binS_to_dec))
+  }
+  if(reversible == TRUE) {
   pset = list()
   for(i in 1:(n+tree$Nnode)) {
     if(i <= n) {
@@ -109,7 +213,7 @@ hypermk2 = function(m,
       pset[[i]] = list()
     }
   }
-  L = ncol(m)
+
   # iterate over tree
   change = TRUE
   while(change == TRUE) {
@@ -142,9 +246,9 @@ hypermk2 = function(m,
           # it's just like two node daughters
           if(length(pset[[d[2]]]) > 0) {
             tmp = min_sum_hamming_three_lists(pset[[d[1]]], pset[[d[2]]])
-            pset[[d[1]]] = tmp$lst1_witness
-            pset[[d[2]]] = tmp$lst2_witness
-            pset[[noderef]] = tmp$i_list
+              pset[[d[1]]] = tmp$lst1_witness
+              pset[[d[2]]] = tmp$lst2_witness
+              pset[[noderef]] = tmp$i_list
 
             if(verbose == TRUE) {
               cat("Node ", noderef, " has tip daughter ", d[1], " and node daughter ", d[2], " so gets\n")
@@ -161,11 +265,10 @@ hypermk2 = function(m,
             # this node gets the lowest hamming distance set
             # the daughter sets get reduced to the witnesses for this
             # minimum set
-            tmp = min_sum_hamming_three_lists(pset[[d[1]]], pset[[d[2]]])
-            pset[[d[1]]] = tmp$lst1_witness
-            pset[[d[2]]] = tmp$lst2_witness
-            pset[[noderef]] = tmp$i_list
-
+                tmp = min_sum_hamming_three_lists(pset[[d[1]]], pset[[d[2]]])
+              pset[[d[1]]] = tmp$lst1_witness
+              pset[[d[2]]] = tmp$lst2_witness
+              pset[[noderef]] = tmp$i_list
             if(verbose == TRUE) {
               cat("Node ", noderef, " has node daughters ", d[1], " ", d[2], " so gets\n")
               print(pset[[d[1]]])
@@ -185,9 +288,6 @@ hypermk2 = function(m,
     pset[[i]] = pset[[i]][[1]]
   }
 
-  bin_to_dec <- function(x) {
-    sum(x * 2^((length(x)-1):0))
-  }
 
   # now produce a set of transitions
   trans = data.frame()
@@ -205,7 +305,9 @@ hypermk2 = function(m,
     }
   }
   trans = trans[trans$From != trans$To,]
+  }
 
+  trans.df = trans
   # try to pull this together into inference for the Mk model
   # relabel states in the transition set
   stateset = unique(c(trans$From, trans$To))
@@ -237,8 +339,8 @@ hypermk2 = function(m,
   Nstates = length(stateset)
   tip_states = stateobs
   rate_model = Q
-  message(Nstates, " states, ", length(which(as.vector(Q) != 0)), " transitions")
-  message("Fitting Mk model...")
+  message(Nstates, " states, ", length(which(as.vector(Q) != 0)), " transitions ", length(stateobs), " tips")
+  message("Fitting Mk2 model...")
   if(force.origin == TRUE) {
     root_prior = rep(0, Nstates)
     root_prior[zero.state] = 1
@@ -307,11 +409,24 @@ hypermk2 = function(m,
   r.df$FromS = sapply(r.df$From, DecToBinS, len=L)
   r.df$ToS = sapply(r.df$To, DecToBinS, len=L)
 
+  if(compare.null == FALSE) {
   hyperfit = list(mk2_fluxes = r.df,
                   fitted_mk = fit.model,
+                  trans = trans.df,
                   L = L,
                   force.origin = force.origin,
                   feature.names = colnames(m))
+  } else {
+    message("Fitting null model...")
+    null.fit = hypermk2_independent(m, tree, reversible=reversible, force.origin=force.origin)
+    hyperfit = list(mk2_fluxes = r.df,
+                    fitted_mk = fit.model,
+                    trans = trans.df,
+                    L = L,
+                    force.origin = force.origin,
+                    feature.names = colnames(m),
+                    null.fit = null.fit)
+  }
 
   return(hyperfit)
 }
