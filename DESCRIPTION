@@ -19,6 +19,6 @@ Imports:
     phangorn,
     stringr
 Remotes:
-    StochasticBiology/hypermk
+    StochasticBiology/hypermk,
     StochasticBiology/hyperdags
 RoxygenNote: 7.3.2
