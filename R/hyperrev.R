@@ -170,6 +170,7 @@ hypermk2_independent = function(m,
 #' @param reversible Boolean (default TRUE) whether to allow reversible transitions
 #' @param nwalker Integer (default 10000), the number of random walkers to simulate on the inferred transition network to sample fluxes
 #' @param force.origin Boolean (default FALSE), whether to force the root of the tree to have state 0^L
+#' @param compare.null Boolean (default FALSE), whether to compare a null model of independent characters
 #'
 #' @return A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, set of transitions in the reduced space, and feature names
 #' @examples
@@ -181,7 +182,8 @@ hypermk2 = function(m,
                     tree,
                     reversible = TRUE,
                     nwalker=10000,
-                    force.origin = FALSE) {
+                    force.origin = FALSE,
+                    compare.null = FALSE) {
   verbose = FALSE
   n = length(tree$tip.label)
   L = ncol(m)
@@ -407,12 +409,24 @@ hypermk2 = function(m,
   r.df$FromS = sapply(r.df$From, DecToBinS, len=L)
   r.df$ToS = sapply(r.df$To, DecToBinS, len=L)
 
+  if(compare.null == FALSE) {
   hyperfit = list(mk2_fluxes = r.df,
                   fitted_mk = fit.model,
                   trans = trans.df,
                   L = L,
                   force.origin = force.origin,
                   feature.names = colnames(m))
+  } else {
+    message("Fitting null model...")
+    null.fit = hypermk2_independent(m, tree, reversible=reversible, force.origin=force.origin)
+    hyperfit = list(mk2_fluxes = r.df,
+                    fitted_mk = fit.model,
+                    trans = trans.df,
+                    L = L,
+                    force.origin = force.origin,
+                    feature.names = colnames(m),
+                    null.fit = null.fit)
+  }
 
   return(hyperfit)
 }
