@@ -4,7 +4,14 @@
 \alias{hypermk2}
 \title{Use HyperMk2 to fit a reversible evolutionary accumulation model}
 \usage{
-hypermk2(m, tree, reversible = TRUE, nwalker = 10000, force.origin = FALSE)
+hypermk2(
+  m,
+  tree,
+  reversible = TRUE,
+  nwalker = 10000,
+  force.origin = FALSE,
+  compare.null = FALSE
+)
 }
 \arguments{
 \item{m}{A matrix of binary observations. Each row should correspond to the ith tree tip observation.}
@@ -16,6 +23,8 @@ hypermk2(m, tree, reversible = TRUE, nwalker = 10000, force.origin = FALSE)
 \item{nwalker}{Integer (default 10000), the number of random walkers to simulate on the inferred transition network to sample fluxes}
 
 \item{force.origin}{Boolean (default FALSE), whether to force the root of the tree to have state 0^L}
+
+\item{compare.null}{Boolean (default FALSE), whether to compare a null model of independent characters}
 }
 \value{
 A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, set of transitions in the reduced space, and feature names
