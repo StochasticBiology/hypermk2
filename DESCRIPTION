@@ -14,8 +14,11 @@ Imports:
     hypermk,
     castor,
     ape,
+    igraph,
+    hyperdags,
     phangorn,
     stringr
 Remotes:
     StochasticBiology/hypermk
+    StochasticBiology/hyperdags
 RoxygenNote: 7.3.2
