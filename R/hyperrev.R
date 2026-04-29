@@ -47,7 +47,8 @@ hypermk2 = function(m,
                     reversible = TRUE,
                     nwalker=10000,
                     force.origin = FALSE,
-                    compare.null = FALSE) {
+                    compare.null = FALSE,
+                    cheap.space = FALSE) {
   verbose = FALSE
   n = length(tree$tip.label)
   L = ncol(m)
@@ -69,6 +70,7 @@ hypermk2 = function(m,
     trans = as.data.frame(apply(edges, c(1,2), binS_to_dec))
   }
   if(reversible == TRUE) {
+    if(cheap.space == FALSE) {
     state.set = build_states(tree, m)
     sample.states = sample_states(tree, state.set)
     trans = sample.states$edges
@@ -78,6 +80,9 @@ hypermk2 = function(m,
     }
     
     trans = trans[trans$From != trans$To,]
+    } else {
+      trans = cheap_transition_set(m, tree, force.origin)
+    }
   }
   
   trans.df = trans
