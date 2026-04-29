@@ -10,7 +10,8 @@ hypermk2(
   reversible = TRUE,
   nwalker = 10000,
   force.origin = FALSE,
-  compare.null = FALSE
+  compare.null = FALSE,
+  cheap.space = FALSE
 )
 }
 \arguments{
