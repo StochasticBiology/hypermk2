@@ -53,7 +53,7 @@ hypermk2 = function(m,
   n = length(tree$tip.label)
   L = ncol(m)
   
-  if(ape::is.binarye(tree) == FALSE) {
+  if(ape::is.binary(tree) == FALSE) {
     message("Warning: HyperMk2 needs a dichotomous tree. I am artificially dichotomising.")
     tree = ape::multi2di(tree)
   }
