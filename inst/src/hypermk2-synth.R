@@ -19,9 +19,9 @@ tree = sim.dyn$my.tree
 m <- do.call(rbind, sim.dyn$x)[1:length(sim.dyn$my.tree$tip.label),]
 rownames(m) = tree$tip.label
 plot_hyperinf_data(m, tree)
-fit = hyperinf(m, tree, method="hypermk2")
-fit.r = hyperinf(m, tree, method="hypermk2", reversible = TRUE)
-fit.0 = hyperinf(m, tree, method="hypermk2", reversible = TRUE, compare.null = TRUE)
+fit = hyperinf(m, tree, method="hypermk2", reversible = FALSE)
+fit.r = hyperinf(m, tree, method="hypermk2")
+fit.0 = hyperinf(m, tree, method="hypermk2", compare.null = TRUE)
 
 my.labels = function(x) {
   return(sapply(as.numeric(x), DecToBinS, len=6))
@@ -46,9 +46,9 @@ tree.lin = sim.dyn.lin$my.tree
 m.lin <- do.call(rbind, sim.dyn.lin$x)[1:length(sim.dyn.lin$my.tree$tip.label),]
 rownames(m.lin) = tree.lin$tip.label
 plot_hyperinf_data(m.lin, tree.lin)
-fit.lin = hyperinf(m.lin, tree.lin, method="hypermk2")
-fit.lin.r = hyperinf(m.lin, tree.lin, method="hypermk2", reversible = TRUE)
-fit.lin.0 = hyperinf(m.lin, tree.lin, method="hypermk2", reversible = TRUE, compare.null = TRUE)
+fit.lin = hyperinf(m.lin, tree.lin, method="hypermk2", reversible = FALSE)
+fit.lin.r = hyperinf(m.lin, tree.lin, method="hypermk2")
+fit.lin.0 = hyperinf(m.lin, tree.lin, method="hypermk2", compare.null = TRUE)
 
 
 ggpubr::ggarrange(plot_hyperinf(fit.lin) + ggraph::geom_node_text(ggplot2::aes(label=name)),
@@ -65,9 +65,9 @@ tree = sim.dyn$my.tree
 m <- do.call(rbind, sim.dyn$x)[1:length(sim.dyn$my.tree$tip.label),]
 rownames(m) = tree$tip.label
 plot_hyperinf_data(m, tree)
-fit.mk = hyperinf(m, tree, method="hypermk", reversible = TRUE)
-fit.mk2 = hyperinf(m, tree, method="hypermk2", reversible = TRUE)
-fit.mk2.0 = hyperinf(m, tree, method="hypermk2", reversible = TRUE, compare.null= TRUE)
+fit.mk = hyperinf(m, tree, method="hypermk")
+fit.mk2 = hyperinf(m, tree, method="hypermk2")
+fit.mk2.0 = hyperinf(m, tree, method="hypermk2", compare.null= TRUE)
 fit.mk.ir = hyperinf(m, tree, method="hypermk", reversible = FALSE)
 fit.mk2.ir = hyperinf(m, tree, method="hypermk2", reversible = FALSE)
 
