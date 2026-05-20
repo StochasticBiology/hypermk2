@@ -29,12 +29,13 @@ hypermk2_independent = function(m,
 
 #' Use HyperMk2 to fit a reversible evolutionary accumulation model
 #'
-#' @param m A matrix of binary observations. Each row should correspond to the ith tree tip observation.
+#' @param m A matrix of binary observations. The ith row should correspond to the ith tree tip observation.
 #' @param tree A phylogenetic tree linking observations.
 #' @param reversible Boolean (default TRUE) whether to allow reversible transitions
 #' @param nwalker Integer (default 10000), the number of random walkers to simulate on the inferred transition network to sample fluxes
 #' @param force.origin Boolean (default FALSE), whether to force the root of the tree to have state 0^L
 #' @param compare.null Boolean (default FALSE), whether to compare a null model of independent characters
+#' @param cheap.space Boolean (default FALSE), whether to use the cheap state space reduction algorithm or the one with local consistency
 #'
 #' @return A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, set of transitions in the reduced space, and feature names
 #' @examples
@@ -75,7 +76,7 @@ hypermk2 = function(m,
   }
   if(reversible == TRUE) {
     if(cheap.space == FALSE) {
-    state.set = build_states(tree, m)
+    state.set = build_states(m, tree)
     sample.states = sample_states(tree, state.set)
     trans = sample.states$edges
     if(force.origin == TRUE) {

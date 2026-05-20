@@ -1,14 +1,14 @@
 #' Fitch-like algorithm to build possible minimum-evolution state sets over a tree
 #'
-#' @param tree A phylogenetic tree linking observations.
 #' @param tip_states A numeric matrix with 0s and 1s for tip observations. Row i should correspond to observation at tip i.
+#' @param tree A phylogenetic tree linking observations.
 #'
 #' @return A list of lists. Each element corresponds to a tip or node in the tree. Each subelement corresponds to a possible state at that tip, along with a matrix describing the indices of "witness" states at the descendant vertices that correspond to the given state at this vertex.
 #' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
 #' tree = ape::rtree(3)
-#' build_states(tree, data)
+#' build_states(data, tree)
 #' @export
-build_states <- function(tree, tip_states) {
+build_states <- function(tip_states, tree) {
 
   Ntip <- length(tree$tip.label)
   Nnode <- tree$Nnode
@@ -120,17 +120,17 @@ build_states <- function(tree, tip_states) {
 #' Sample a single minimum-evolution instance from the Fitch-like algorithm output
 #'
 #' @param tree A phylogenetic tree linking observations.
-#' @param states A list of lists describing possible states and witnesses, output from build_states
+#' @param state_sets A list of lists describing possible states and witnesses, output from build_states
 #'
 #' @return A named list containing (a) a list of binary vectors, with each vector corresponding to the sampled state at that vertex in the tree; (b) a dataframe of From-To transitions on the tree (in decimal representation)
 #' @examples
 #' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
 #' tree = ape::rtree(3)
-#' state.set = build_states(tree, data)
+#' state.set = build_states(data, tree)
 #' sample_states(tree, state.set)
 #' @export
-sample_states <- function(tree, states) {
-  
+sample_states <- function(tree, state_sets) {
+  states = state_sets
   Ntip <- length(tree$tip.label)
   
   # robust root detection

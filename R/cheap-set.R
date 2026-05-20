@@ -85,7 +85,7 @@ min_sum_hamming_three_lists <- function(lst1, lst2) {
 
 #' Build a cheap approximation to reduced state space, avoiding Fitch-like computation
 #'
-#' @param m A matrix of binary observations. Each row should correspond to the ith tree tip observation.
+#' @param m A matrix of binary observations. The ith row should correspond to the ith tree tip observation.
 #' @param tree A phylogenetic tree linking observations.
 #' @param force.origin Boolean (default FALSE), whether to force the root of the tree to have state 0^L
 #'
