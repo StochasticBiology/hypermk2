@@ -2,6 +2,7 @@ library(hyperdags)
 library(hyperinf)
 library(ggraph)
 library(ggpubr)
+library(hypermk2)
 
 sf = 2
 
@@ -14,6 +15,20 @@ DecToBinS <- function(x, len) {
   }
   return(paste(s, collapse=""))
 }
+
+#### simple example
+library(ape)
+tree = stree(4, type="balanced")
+data = matrix(c(1,0,0,
+                1,0,1,
+                0,1,0,
+                0,0,1), byrow = TRUE, ncol=3, nrow=4)
+rownames(data) = tree$tip.label
+plot_hyperinf_data(data, tree)
+states = build_states(data, tree)
+
+set.seed(1)
+sample_states(tree, states)
 
 #### bilinear dynamics, compare reversible and irreversible Mk2
 
@@ -54,6 +69,20 @@ plot.out.1 = ggarrange(plot_hyperinf_data(m, tree),
 
 png("plot-out-1.png", width=500*sf, height=500*sf, res=72*sf)
 print(plot.out.1)
+dev.off()
+
+om.plot = plot_hyperinf_ordering_matrices(fit, type="relative", thetastep=3)
+om.plot.r = plot_hyperinf_ordering_matrices(fit.r, type="relative", thetastep=3)
+
+plot.all.1 = ggarrange(plot_hyperinf_data(m, tree),
+                       ggarrange(plot_hyperinf_comparative(fit, style="full"),
+                       plot_hyperinf_comparative(fit.r, style="full", bend=1),
+                       om.plot, om.plot.r,
+                       nrow = 2, ncol=2, labels=c("Bi", "Ci", "ii", "ii")),
+                       nrow=1, labels=c("A", ""), widths=c(0.6,2))
+
+png("plot-all-1.png", width=800*sf, height=600*sf, res=72*sf)
+print(plot.all.1)
 dev.off()
 
 ggpubr::ggarrange(plot_hyperinf(fit[[1]]) + ggraph::geom_node_text(ggplot2::aes(label=name)),
@@ -121,6 +150,26 @@ png("plot-out-2.png", width=800*sf, height=400*sf, res=72*sf)
 print(plot.out.2)
 dev.off()
 
+om.plot = plot_hyperinf_ordering_matrices(fit.mk2, type="relative", thetastep = 3)
+om.plot.ir = plot_hyperinf_ordering_matrices(fit.mk2.ir, type="relative", thetastep = 3)
+
+plot.both.2 = ggarrange(plot_hyperinf_data(m, tree),
+                        ggarrange(
+                          plot_hyperinf(fit.mk) + geom_node_text(size=3, angle=45, aes(label=my.labels(name)))+  coord_cartesian(clip = "off"),
+                          plot_hyperinf(fit.mk2[[1]]) + geom_node_text(size=3, angle=45, aes(label=my.labels(name))) +  coord_cartesian(clip = "off"),
+                          plot_hyperinf(fit.mk.ir) + geom_node_text(size=3, angle=45, aes(label=my.labels(name)))+  coord_cartesian(clip = "off"),
+                          plot_hyperinf(fit.mk2.ir[[1]]) + geom_node_text(size=3, angle=45, aes(label=my.labels(name))) +  coord_cartesian(clip = "off"),
+                          nrow = 2, ncol = 2, labels=c("Bi", "Ci", "ii", "ii")),
+                        plot_hyperinf_comparative(fit.mk2, style="full"),
+                                  plot_hyperinf_comparative(fit.mk2.ir, style="full"),
+                        om.plot, om.plot.ir,
+                        nrow = 3, ncol=2, labels=c("A", "", "Di", "Ei", "ii", "ii"),
+                        heights=c(1.5,1,1))
+  
+
+png("plot-both-2.png", width=800*sf, height=900*sf, res=72*sf)
+print(plot.both.2)
+dev.off()
 hyperinf_AIC(fit.mk)
 hyperinf_AIC(fit.mk2[[1]])
 plot_hyperinf(fit.mk)
