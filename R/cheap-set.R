@@ -5,7 +5,7 @@ expand_disagreements <- function(x, y) {
   # For each position, keep either the single value (if equal)
   # or both values (if different)
   choices <- Map(function(a, b) {
-    if (a == b) a else c(a, b)
+    if (is.na(a+b)) c(0,1) else if (a == b) a else c(0, 1)
   }, x, y)
   
   # Generate all combinations
@@ -200,10 +200,19 @@ cheap_transition_set = function(m,
     noderef = i+n
     d = phangorn::Children(tree, noderef)
     # transition set
-    trans = rbind(trans, data.frame(From=bin_to_dec(pset[[noderef]]),
-                                    To=bin_to_dec(pset[[d[[1]]]])))
-    trans = rbind(trans, data.frame(From=bin_to_dec(pset[[noderef]]),
-                                    To=bin_to_dec(pset[[d[[2]]]])))
+    
+    dset = expand_disagreements(pset[[d[[1]]]], pset[[d[[1]]]])
+    for(j in 1:length(dset)) {
+      trans = rbind(trans, data.frame(From=bin_to_dec(pset[[noderef]]),
+                                      To=bin_to_dec(dset[[j]])))
+    }
+    
+    dset = expand_disagreements(pset[[d[[2]]]], pset[[d[[2]]]])
+    for(j in 1:length(dset)) {
+      trans = rbind(trans, data.frame(From=bin_to_dec(pset[[noderef]]),
+                                      To=bin_to_dec(dset[[j]])))
+    }
+    
     if(force.origin == TRUE) {
       trans = rbind(trans, data.frame(From=0,
                                       To=bin_to_dec(pset[[noderef]])))
