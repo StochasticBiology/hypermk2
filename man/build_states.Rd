@@ -4,18 +4,18 @@
 \alias{build_states}
 \title{Fitch-like algorithm to build possible minimum-evolution state sets over a tree}
 \usage{
-build_states(tree, tip_states)
+build_states(tip_states, tree)
 }
 \arguments{
-\item{tree}{A phylogenetic tree linking observations.}
-
 \item{tip_states}{A numeric matrix with 0s and 1s for tip observations. Row i should correspond to observation at tip i.}
+
+\item{tree}{A phylogenetic tree linking observations.}
 }
 \value{
 A list of lists. Each element corresponds to a tip or node in the tree. Each subelement corresponds to a possible state at that tip, along with a matrix describing the indices of "witness" states at the descendant vertices that correspond to the given state at this vertex.
 data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
 tree = ape::rtree(3)
-build_states(tree, data)
+build_states(data, tree)
 }
 \description{
 Fitch-like algorithm to build possible minimum-evolution state sets over a tree

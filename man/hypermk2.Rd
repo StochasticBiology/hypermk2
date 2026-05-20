@@ -15,7 +15,7 @@ hypermk2(
 )
 }
 \arguments{
-\item{m}{A matrix of binary observations. Each row should correspond to the ith tree tip observation.}
+\item{m}{A matrix of binary observations. The ith row should correspond to the ith tree tip observation.}
 
 \item{tree}{A phylogenetic tree linking observations.}
 
@@ -26,6 +26,8 @@ hypermk2(
 \item{force.origin}{Boolean (default FALSE), whether to force the root of the tree to have state 0^L}
 
 \item{compare.null}{Boolean (default FALSE), whether to compare a null model of independent characters}
+
+\item{cheap.space}{Boolean (default FALSE), whether to use the cheap state space reduction algorithm or the one with local consistency}
 }
 \value{
 A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, set of transitions in the reduced space, and feature names

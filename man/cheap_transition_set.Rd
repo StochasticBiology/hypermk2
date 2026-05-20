@@ -7,7 +7,7 @@
 cheap_transition_set(m, tree, force.origin = FALSE)
 }
 \arguments{
-\item{m}{A matrix of binary observations. Each row should correspond to the ith tree tip observation.}
+\item{m}{A matrix of binary observations. The ith row should correspond to the ith tree tip observation.}
 
 \item{tree}{A phylogenetic tree linking observations.}
 

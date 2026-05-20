@@ -4,12 +4,12 @@
 \alias{sample_states}
 \title{Sample a single minimum-evolution instance from the Fitch-like algorithm output}
 \usage{
-sample_states(tree, states)
+sample_states(tree, state_sets)
 }
 \arguments{
 \item{tree}{A phylogenetic tree linking observations.}
 
-\item{states}{A list of lists describing possible states and witnesses, output from build_states}
+\item{state_sets}{A list of lists describing possible states and witnesses, output from build_states}
 }
 \value{
 A named list containing (a) a list of binary vectors, with each vector corresponding to the sampled state at that vertex in the tree; (b) a dataframe of From-To transitions on the tree (in decimal representation)
@@ -20,6 +20,6 @@ Sample a single minimum-evolution instance from the Fitch-like algorithm output
 \examples{
 data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
 tree = ape::rtree(3)
-state.set = build_states(tree, data)
+state.set = build_states(data, tree)
 sample_states(tree, state.set)
 }
