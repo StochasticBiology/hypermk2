@@ -2,7 +2,7 @@
 #'
 #' @param m A matrix of binary observations. Each row should correspond to the ith tree tip observation.
 #' @param tree A phylogenetic tree linking observations.
-#' @param ... other parameters to pass to hypermk2
+#' @param ... other parameters to pass to hypermk::mk_infer_phylogenetic
 #'
 #' @return A named list containing total and feature-specific likelihoods and AICs
 #' @examples
@@ -17,7 +17,8 @@ hypermk2_independent = function(m,
   for(i in 1:ncol(m)) {
     this.f = matrix(m[,i], ncol=1)
     if(sum(this.f) != 0 & sum(this.f) != nrow(m)) {
-      this.fit = hypermk2(this.f, tree, nwalker = 1, ...)
+      #this.fit = hypermk2(this.f, tree, nwalker = 1, ...)
+      this.fit = hypermk::mk_infer_phylogenetic(this.f, tree, ...)
       res.df = rbind(res.df, data.frame(feature=i, loglik = this.fit$fitted_mk$loglikelihood, AIC = this.fit$fitted_mk$AIC))
     }
   }
@@ -34,7 +35,7 @@ hypermk2_independent = function(m,
 #' @param reversible Boolean (default TRUE) whether to allow reversible transitions
 #' @param nwalker Integer (default 10000), the number of random walkers to simulate on the inferred transition network to sample fluxes
 #' @param force.origin Boolean (default FALSE), whether to force the root of the tree to have state 0^L
-#' @param compare.null Boolean (default FALSE), whether to compare a null model of independent characters
+#' @param use.null Boolean (default FALSE), whether to use a null model of independent characters
 #' @param cheap.space Boolean (default FALSE), whether to use the cheap state space reduction algorithm or the one with local consistency
 #' @param expand.uncertainty Boolean (default TRUE) In cases with uncertain data, whether to retain transitions to all possible instances of the uncertain states (TRUE) or just one sample (FALSE)
 #'
@@ -49,7 +50,7 @@ hypermk2 = function(m,
                     reversible = TRUE,
                     nwalker=10000,
                     force.origin = FALSE,
-                    compare.null = FALSE,
+                    use.null = FALSE,
                     cheap.space = FALSE,
                     expand.uncertainty = TRUE) {
   verbose = FALSE
@@ -72,6 +73,23 @@ hypermk2 = function(m,
     x = as.numeric(strsplit(x, "")[[1]])
     sum(x * 2^((length(x)-1):0))
   }
+  if(use.null == TRUE) {
+    if(no.uncertainty == FALSE) {
+      message("Can't do null model with uncertainty (yet)")
+      return(NULL)
+    } else {
+      message("Fitting null model...")
+      null.fit = hypermk2_independent(m, tree, reversible=reversible)
+      hyperfit = list(mk2_fluxes = NULL,
+                      fitted_mk = null.fit,
+                      trans = NULL,
+                      L = L,
+                      force.origin = FALSE,
+                      feature.names = colnames(m))
+      return(hyperfit)
+    }
+  }
+  
   message("Building reduced state space...")
   if(reversible == FALSE) {
     mstr = apply(m, 1, paste0, collapse = "")
@@ -220,24 +238,12 @@ hypermk2 = function(m,
   r.df$FromS = sapply(r.df$From, DecToBinS, len=L)
   r.df$ToS = sapply(r.df$To, DecToBinS, len=L)
   
-  if(compare.null == FALSE) {
-    hyperfit = list(mk2_fluxes = r.df,
-                    fitted_mk = fit.model,
-                    trans = trans.df,
-                    L = L,
-                    force.origin = force.origin,
-                    feature.names = colnames(m))
-  } else {
-    message("Fitting null model...")
-    null.fit = hypermk2_independent(m, tree, reversible=reversible, force.origin=force.origin)
-    hyperfit = list(mk2_fluxes = r.df,
-                    fitted_mk = fit.model,
-                    trans = trans.df,
-                    L = L,
-                    force.origin = force.origin,
-                    feature.names = colnames(m),
-                    null.fit = null.fit)
-  }
+  hyperfit = list(mk2_fluxes = r.df,
+                  fitted_mk = fit.model,
+                  trans = trans.df,
+                  L = L,
+                  force.origin = force.origin,
+                  feature.names = colnames(m))
   
   return(hyperfit)
 }
