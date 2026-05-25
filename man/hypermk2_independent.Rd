@@ -11,7 +11,7 @@ hypermk2_independent(m, tree, ...)
 
 \item{tree}{A phylogenetic tree linking observations.}
 
-\item{...}{other parameters to pass to hypermk2}
+\item{...}{other parameters to pass to hypermk::mk_infer_phylogenetic}
 }
 \value{
 A named list containing total and feature-specific likelihoods and AICs
