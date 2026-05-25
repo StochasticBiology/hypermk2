@@ -11,7 +11,8 @@ hypermk2(
   nwalker = 10000,
   force.origin = FALSE,
   compare.null = FALSE,
-  cheap.space = FALSE
+  cheap.space = FALSE,
+  expand.uncertainty = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ hypermk2(
 \item{compare.null}{Boolean (default FALSE), whether to compare a null model of independent characters}
 
 \item{cheap.space}{Boolean (default FALSE), whether to use the cheap state space reduction algorithm or the one with local consistency}
+
+\item{expand.uncertainty}{Boolean (default TRUE) In cases with uncertain data, whether to retain transitions to all possible instances of the uncertain states (TRUE) or just one sample (FALSE)}
 }
 \value{
 A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, set of transitions in the reduced space, and feature names

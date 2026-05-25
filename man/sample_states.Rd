@@ -4,12 +4,14 @@
 \alias{sample_states}
 \title{Sample a single minimum-evolution instance from the Fitch-like algorithm output}
 \usage{
-sample_states(tree, state_sets)
+sample_states(tree, state_sets, expand.uncertainty = TRUE)
 }
 \arguments{
 \item{tree}{A phylogenetic tree linking observations.}
 
 \item{state_sets}{A list of lists describing possible states and witnesses, output from build_states}
+
+\item{expand.uncertainty}{Boolean (default TRUE) In cases with uncertain data, whether to retain transitions to all possible instances of the uncertain states (TRUE) or just one sample (FALSE)}
 }
 \value{
 A named list containing (a) a list of binary vectors, with each vector corresponding to the sampled state at that vertex in the tree; (b) a dataframe of From-To transitions on the tree (in decimal representation)

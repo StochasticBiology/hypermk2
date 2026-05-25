@@ -36,6 +36,7 @@ hypermk2_independent = function(m,
 #' @param force.origin Boolean (default FALSE), whether to force the root of the tree to have state 0^L
 #' @param compare.null Boolean (default FALSE), whether to compare a null model of independent characters
 #' @param cheap.space Boolean (default FALSE), whether to use the cheap state space reduction algorithm or the one with local consistency
+#' @param expand.uncertainty Boolean (default TRUE) In cases with uncertain data, whether to retain transitions to all possible instances of the uncertain states (TRUE) or just one sample (FALSE)
 #'
 #' @return A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, set of transitions in the reduced space, and feature names
 #' @examples
@@ -49,11 +50,17 @@ hypermk2 = function(m,
                     nwalker=10000,
                     force.origin = FALSE,
                     compare.null = FALSE,
-                    cheap.space = FALSE) {
+                    cheap.space = FALSE,
+                    expand.uncertainty = TRUE) {
   verbose = FALSE
   n = length(tree$tip.label)
   L = ncol(m)
   
+  if(is.na(sum(m))) {
+    no.uncertainty = FALSE
+  } else {
+    no.uncertainty = TRUE
+  }
   if(ape::is.binary(tree) == FALSE) {
     message("Warning: HyperMk2 needs a dichotomous tree. I am artificially dichotomising.")
     tree = ape::multi2di(tree)
@@ -76,15 +83,15 @@ hypermk2 = function(m,
   }
   if(reversible == TRUE) {
     if(cheap.space == FALSE) {
-    state.set = build_states(m, tree)
-    sample.states = sample_states(tree, state.set)
-    trans = sample.states$edges
-    if(force.origin == TRUE) {
-      trans = rbind(trans, data.frame(From=0,
-                                      To=unique(sample.states$edges$From)))
-    }
-    
-    trans = trans[trans$From != trans$To,]
+      state.set = build_states(m, tree)
+      sample.states = sample_states(tree, state.set, expand.uncertainty = expand.uncertainty)
+      trans = sample.states$edges
+      if(force.origin == TRUE) {
+        trans = rbind(trans, data.frame(From=0,
+                                        To=unique(sample.states$edges$From)))
+      }
+      
+      trans = trans[trans$From != trans$To,]
     } else {
       trans = cheap_transition_set(m, tree, force.origin)
     }
@@ -103,36 +110,61 @@ hypermk2 = function(m,
   statetrans = unique(statetrans)
   zero.state = which(stateset == 0)
   
-  # relabel observations on the original dataset
-  stateobs = c()
-  mdec = as.vector(apply(m, 1, bin_to_dec))
-  for(i in 1:nrow(m)) {
-    this.obs = which(stateset == bin_to_dec(m[i,]))
-    stateobs = c(stateobs, this.obs)
-  }
-  
   # use this relabelling to motivate the indexed Q-matrix
   Q = matrix(0, nrow=length(stateset), ncol=length(stateset))
   for(i in 1:nrow(statetrans)) {
     Q[statetrans$From[i],statetrans$To[i]] = i
   }
   
-  
-  trees = tree
-  Nstates = length(stateset)
-  tip_states = stateobs
-  rate_model = Q
-  message(Nstates, " states, ", length(which(as.vector(Q) != 0)), " transitions ", length(stateobs), " tips")
-  message("Fitting Mk2 model...")
-  if(force.origin == TRUE) {
-    root_prior = rep(0, Nstates)
-    root_prior[zero.state] = 1
-    fit.model = castor::fit_mk(trees = trees, Nstates = Nstates,
-                               root_prior = root_prior,
-                               tip_states = stateobs, rate_model = Q)
+  if(no.uncertainty == TRUE) {
+    # relabel observations on the original dataset
+    stateobs = c()
+    mdec = as.vector(apply(m, 1, bin_to_dec))
+    for(i in 1:nrow(m)) {
+      this.obs = which(stateset == bin_to_dec(m[i,]))
+      stateobs = c(stateobs, this.obs)
+    }
+    
+    trees = tree
+    Nstates = length(stateset)
+    tip_states = stateobs
+    rate_model = Q
+    message(Nstates, " states, ", length(which(as.vector(Q) != 0)), " transitions ", length(stateobs), " tips")
+    message("Fitting Mk2 model...")
+    if(force.origin == TRUE) {
+      root_prior = rep(0, Nstates)
+      root_prior[zero.state] = 1
+      fit.model = castor::fit_mk(trees = trees, Nstates = Nstates,
+                                 root_prior = root_prior,
+                                 tip_states = stateobs, rate_model = Q)
+    } else {
+      fit.model = castor::fit_mk(trees = trees, Nstates = Nstates,
+                                 tip_states = stateobs, rate_model = Q)
+    }
   } else {
-    fit.model = castor::fit_mk(trees = trees, Nstates = Nstates,
-                               tip_states = stateobs, rate_model = Q)
+    tip_priors = matrix(0, nrow=length(tree$tip.label), ncol = length(stateset))
+    for(i in 1:nrow(m)) {
+      this.set = expand_disagreements(m[i,], m[i,])
+      this.set.dec = unlist(lapply(this.set, bin_to_dec))
+      this.set.state.refs = which(stateset %in% this.set.dec)
+      tip_priors[i,this.set.state.refs] = 1/length(this.set.state.refs)
+    }
+    
+    trees = tree
+    Nstates = length(stateset)
+    rate_model = Q
+    message(Nstates, " states, ", length(which(as.vector(Q) != 0)), " transitions ", nrow(tip_priors), " *uncertain* tips")
+    message("Fitting Mk2 model...")
+    if(force.origin == TRUE) {
+      root_prior = rep(0, Nstates)
+      root_prior[zero.state] = 1
+      fit.model = castor::fit_mk(trees = trees, Nstates = Nstates,
+                                 root_prior = root_prior,
+                                 tip_priors = tip_priors, rate_model = Q)
+    } else {
+      fit.model = castor::fit_mk(trees = trees, Nstates = Nstates,
+                                 tip_priors = tip_priors, rate_model = Q)
+    }
   }
   
   # get the set of supported transitions

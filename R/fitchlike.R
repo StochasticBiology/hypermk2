@@ -9,7 +9,7 @@
 #' build_states(data, tree)
 #' @export
 build_states <- function(tip_states, tree) {
-
+  
   Ntip <- length(tree$tip.label)
   Nnode <- tree$Nnode
   total_nodes <- Ntip + Nnode
@@ -40,9 +40,11 @@ build_states <- function(tip_states, tree) {
   
   # --- tips ---
   for (i in seq_len(Ntip)) {
-    states[[i]] <- list(
-      list(state = tip_states[i, ], pairs = NULL)
-    )
+    tipset = expand_disagreements(tip_states[i, ], tip_states[i, ])
+    states[[i]] <- list()
+    for(j in 1:length(tipset)) {
+      states[[i]][[j]] = list(state = tipset[[j]], pairs = NULL)
+    }
   }
   
   # --- postorder traversal ---
@@ -71,7 +73,7 @@ build_states <- function(tip_states, tree) {
         
         # --- Fitch-style bitwise possibilities ---
         choices <- lapply(seq_along(v1), function(k) {
-          if (v1[k] == v2[k]) v1[k] else c(0,1)
+          if (is.na(v1[k]+v2[k])) c(0,1) else if (v1[k] == v2[k]) v1[k] else c(0,1)
         })
         
         combos <- expand.grid(choices)
@@ -121,6 +123,7 @@ build_states <- function(tip_states, tree) {
 #'
 #' @param tree A phylogenetic tree linking observations.
 #' @param state_sets A list of lists describing possible states and witnesses, output from build_states
+#' @param expand.uncertainty Boolean (default TRUE) In cases with uncertain data, whether to retain transitions to all possible instances of the uncertain states (TRUE) or just one sample (FALSE)
 #'
 #' @return A named list containing (a) a list of binary vectors, with each vector corresponding to the sampled state at that vertex in the tree; (b) a dataframe of From-To transitions on the tree (in decimal representation)
 #' @examples
@@ -129,7 +132,9 @@ build_states <- function(tip_states, tree) {
 #' state.set = build_states(data, tree)
 #' sample_states(tree, state.set)
 #' @export
-sample_states <- function(tree, state_sets) {
+sample_states <- function(tree, 
+                          state_sets,
+                          expand.uncertainty = TRUE) {
   states = state_sets
   Ntip <- length(tree$tip.label)
   
@@ -165,17 +170,22 @@ sample_states <- function(tree, state_sets) {
   }
   
   # --- build edge dataframe ---
-  edge_df <- data.frame(
-    From = integer(nrow(tree$edge)),
-    To   = integer(nrow(tree$edge))
-  )
+  edge_df <- data.frame()
   
   for (e in seq_len(nrow(tree$edge))) {
     parent <- tree$edge[e, 1]
     child  <- tree$edge[e, 2]
     
-    edge_df$From[e] <- bin_to_dec(sampled[[parent]])
-    edge_df$To[e]   <- bin_to_dec(sampled[[child]])
+    if(child < Ntip && length(states[[child]]) > 1 && expand.uncertainty == TRUE) {
+      for(j in 1:length(states[[child]])) {
+        edge_df = rbind(edge_df, data.frame(From = bin_to_dec(sampled[[parent]]),
+                                            To = bin_to_dec(states[[child]][[j]]$state)))
+        
+      }      
+    } else {
+      edge_df = rbind(edge_df, data.frame(From = bin_to_dec(sampled[[parent]]),
+                                          To = bin_to_dec(sampled[[child]])))
+    }
   }
   
   list(
