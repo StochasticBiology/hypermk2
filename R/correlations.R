@@ -9,7 +9,7 @@
 #' @export
 plot_correlations <- function(m) {
   X = m
-  feature_names = rownames(X)
+  feature_names = colnames(X)
   n <- nrow(X)
   p <- ncol(X)
   
