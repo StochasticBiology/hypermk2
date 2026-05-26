@@ -2,6 +2,7 @@
 
 export(build_states)
 export(cheap_transition_set)
+export(feature_correlations)
 export(hypermk2)
 export(hypermk2_independent)
 export(plot_correlations)
