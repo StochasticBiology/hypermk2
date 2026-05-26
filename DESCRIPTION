@@ -17,7 +17,8 @@ Imports:
     igraph,
     hyperdags,
     phangorn,
-    stringr
+    stringr,
+    reshape2
 Remotes:
     StochasticBiology/hypermk,
     StochasticBiology/hyperdags
