@@ -2,12 +2,12 @@
 #'
 #' @param m A matrix of binary observations.
 #'
-#' @return A ggplot2 object.
+#' @return A matrix of correlation statistics.
 #' @examples
 #' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
-#' plot_correlations(data)
+#' feature_correlations(data)
 #' @export
-plot_correlations <- function(m) {
+feature_correlations <- function(m) {
   X = m
   feature_names = colnames(X)
   n <- nrow(X)
@@ -34,6 +34,21 @@ plot_correlations <- function(m) {
   rownames(res_mat) = feature_names
   colnames(res_mat) = feature_names
   
+  return(res_mat)
+}
+
+#' Plot correlation statistics in a dataset
+#'
+#' @param m A matrix of binary observations.
+#'
+#' @return A ggplot2 object.
+#' @examples
+#' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
+#' plot_correlations(data)
+#' @export
+plot_correlations <- function(m) {
+  feature_names = colnames(m)
+  res_mat = feature_correlations(m)
   df <- reshape2::melt(res_mat)
   colnames(df) <- c("row", "col", "value")
   
@@ -45,7 +60,7 @@ plot_correlations <- function(m) {
            ggplot2::scale_fill_gradient2(low="blue", mid="white", high="red") +
            ggplot2::theme_minimal() +
            ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
-          panel.grid = ggplot2::element_blank()) + 
+           panel.grid = ggplot2::element_blank()) + 
            ggplot2::labs(x = NULL, y=NULL, fill = "Residual")
   )
 }
