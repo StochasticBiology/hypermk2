@@ -14,18 +14,21 @@ hypermk2_independent = function(m,
                                 tree,
                                 ...) {
   res.df = data.frame()
+  fit.set = list()
   for(i in 1:ncol(m)) {
     this.f = matrix(m[,i], ncol=1)
     if(sum(this.f) != 0 & sum(this.f) != nrow(m)) {
       #this.fit = hypermk2(this.f, tree, nwalker = 1, ...)
-      this.fit = hypermk::mk_infer_phylogenetic(this.f, tree, ...)
-      res.df = rbind(res.df, data.frame(feature=i, loglik = this.fit$fitted_mk$loglikelihood, AIC = this.fit$fitted_mk$AIC))
+      fit.set[[i]] = hypermk::mk_infer_phylogenetic(this.f, tree, ...)
+      res.df = rbind(res.df, data.frame(feature=i, 
+                                        loglik = fit.set[[i]]$fitted_mk$loglikelihood, 
+                                        AIC = fit.set[[i]]$fitted_mk$AIC))
     }
   }
   #  res.df = rbind(res.df, data.frame(feature=0, loglik=sum(res.df$loglik), AIC=sum(res.df$AIC)))
   return(list(loglik =sum(res.df$loglik),
               AIC = sum(res.df$AIC),
-              by.feature = res.df))
+              by.feature = fit.set))
 }
 
 #' Use HyperMk2 to fit a reversible evolutionary accumulation model
