@@ -2,9 +2,7 @@
 
 export(build_states)
 export(cheap_transition_set)
-export(feature_correlations)
 export(hypermk2)
 export(hypermk2_independent)
-export(phylo_assoc_matrix)
-export(plot_correlations)
+export(phylo_correlations)
 export(sample_states)
