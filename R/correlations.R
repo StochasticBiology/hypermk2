@@ -64,3 +64,91 @@ plot_correlations <- function(m) {
            ggplot2::labs(x = NULL, y=NULL, fill = "Residual")
   )
 }
+
+#' Phylogenetic correlation statistics in a dataset
+#'
+#' @param m A matrix of binary observations. Row names should correspond to tree tips.
+#' @param tree A phylogenetic tree.
+#' @param pre.prune Boolean (default TRUE) whether to preprocess by removing non-significant features from uncorrected correlation first
+#'
+#' @return A matrix of likelihood-ratio-test statistics for dependence vs independence.
+#' @examples
+#' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
+#' tree = ape::rtree(3)
+#' colnames(data) = c("a", "b", "c")
+#' rownames(data) = tree$tip.label
+#' phylo_assoc_matrix(data, tree)
+#' @export
+phylo_assoc_matrix <- function(m, 
+                               tree,
+                               pre.prune = TRUE) {
+  
+  if(pre.prune == TRUE) {
+    cm = feature_correlations(m)
+    cdf <- reshape2::melt(cm)
+    sigdf = cdf[!is.na(cdf$value) & cdf$value > 2,]
+    if(nrow(sigdf) == 0) {
+      return(NULL)
+    }
+    sigfeats = unique(sigdf$Var1)
+    sigindices = which(colnames(m) %in% sigfeats)
+    sigm = m[,sigindices]
+    X = sigm
+  } else {
+    X = m
+  }
+  
+  p <- ncol(X)
+  assoc <- matrix(NA, p, p)
+  rownames(assoc) <- colnames(X)
+  colnames(assoc) <- colnames(X)
+  
+  # convert to corHMM format once
+  tip_names <- rownames(X)
+  
+  for (i in 1:(p-1)) {
+    for (j in (i+1):p) {
+      
+      dat <- data.frame(
+        species = tip_names,
+        trait1 = X[, i],
+        trait2 = X[, j]
+      )
+      
+      # ensure alignment
+      dat <- dat[match(tree$tip.label, dat$species), ]
+      
+      # build joint states
+      dat$state <- paste0(dat$trait1, dat$trait2)
+      
+      dat_use <- data.frame(species = dat$species, state = dat$state)
+      
+      # drop missing if any
+      dat_use <- na.omit(dat_use)
+      
+      # independent model
+      fit_ind <- try(
+        corHMM::corHMM(tree, dat_use, rate.cat = 1, model = "ER"),
+        silent = TRUE
+      )
+      
+      # dependent model
+      fit_dep <- try(
+        corHMM::corHMM(tree, dat_use, rate.cat = 1, model = "ARD"),
+        silent = TRUE
+      )
+      
+      if (inherits(fit_ind, "try-error") || inherits(fit_dep, "try-error")) {
+        next
+      }
+      
+      lrt <- 2 * (fit_dep$loglik - fit_ind$loglik)
+      
+      assoc[i, j] <- lrt
+      assoc[j, i] <- lrt
+    }
+  }
+  
+  diag(assoc) <- 0
+  return(assoc)
+}
