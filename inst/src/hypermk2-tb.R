@@ -4,8 +4,8 @@ library(readxl)
 library(phytools)
 library(hypertrapsct)
 
-run.inference = FALSE
-pull.data = FALSE
+run.inference = TRUE
+pull.data = TRUE
 
 if(pull.data == TRUE) {
   system("wget https://static-content.springer.com/esm/art%3A10.1038%2Fng.2878/MediaObjects/41588_2014_BFng2878_MOESM35_ESM.xls")
