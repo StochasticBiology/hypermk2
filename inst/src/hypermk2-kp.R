@@ -1,21 +1,22 @@
 library(hyperinf)
 
 run.inference = TRUE
+n.samples = 1
 
-load("~/Dropbox/Documents/2026_Projects/Jakob/kp-test-data.Rdata")
-load("~/Dropbox/Documents/2026_Projects/Jakob/kp-test-tree.Rdata")
+load("kp-test-data.Rdata")
+load("kp-test-tree.Rdata")
 
 rownames(m) = tree$tip.label
 
 fit.hmk2 = fit.hmk21 = list()
 if(run.inference == TRUE) {
   
-  for(i in 1:5) {
+  for(i in 1:n.samples) {
   fit.hmk2[[i]] = hyperinf(m, tree, reversible=TRUE)
   fit.hmk21[[i]] = hyperinf(m, tree, reversible=TRUE, force.origin=TRUE)
   }
   
-  load("~/Dropbox/Documents/2026_Projects/Jakob/kp-hypertraps-fit.Rdata")
+  load("kp-hypertraps-fit.Rdata")
   res.tmp$feature.names = res.tmp$featurenames
   fit.ht = res.tmp
   
