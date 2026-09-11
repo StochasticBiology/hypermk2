@@ -11,6 +11,7 @@ hypermk2(
   nwalker = 10000,
   force.origin = FALSE,
   use.null = FALSE,
+  prune.space = TRUE,
   cheap.space = FALSE,
   expand.uncertainty = TRUE
 )
@@ -27,6 +28,8 @@ hypermk2(
 \item{force.origin}{Boolean (default FALSE), whether to force the root of the tree to have state 0^L}
 
 \item{use.null}{Boolean (default FALSE), whether to use a null model of independent characters}
+
+\item{prune.space}{Boolean (default TRUE), whether to actually prune state space. If FALSE, this effectively becomes the original HyperMk approach.}
 
 \item{cheap.space}{Boolean (default FALSE), whether to use the cheap state space reduction algorithm or the one with local consistency}
 
