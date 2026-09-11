@@ -42,6 +42,7 @@ hypermk2_independent = function(m,
 #' @param prune.space Boolean (default TRUE), whether to actually prune state space. If FALSE, this effectively becomes the original HyperMk approach.
 #' @param cheap.space Boolean (default FALSE), whether to use the cheap state space reduction algorithm or the one with local consistency
 #' @param expand.uncertainty Boolean (default TRUE) In cases with uncertain data, whether to retain transitions to all possible instances of the uncertain states (TRUE) or just one sample (FALSE)
+#' @param reverse.all Boolean (default FALSE) whether to make all transitions in the reduced space reversible
 #'
 #' @return A named list containing the fitted Mk model object, inferred fluxes between states, the number of features, set of transitions in the reduced space, and feature names
 #' @examples
@@ -57,7 +58,8 @@ hypermk2 = function(m,
                     use.null = FALSE,
                     prune.space = TRUE,
                     cheap.space = FALSE,
-                    expand.uncertainty = TRUE) {
+                    expand.uncertainty = TRUE,
+                    reverse.all = FALSE) {
   verbose = FALSE
   n = length(tree$tip.label)
   L = ncol(m)
@@ -130,7 +132,10 @@ hypermk2 = function(m,
   }
   }
   
-  trans.df = trans
+  if(reverse.all == TRUE) {
+    trans = rbind(trans, trans[, 2:1])
+  }
+  trans.df = unique(trans)
   # try to pull this together into inference for the Mk model
   # relabel states in the transition set
   stateset = unique(c(trans$From, trans$To))
