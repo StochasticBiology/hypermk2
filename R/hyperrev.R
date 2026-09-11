@@ -133,7 +133,9 @@ hypermk2 = function(m,
   }
   
   if(reverse.all == TRUE) {
-    trans = rbind(trans, trans[, 2:1])
+    trans.swap = trans
+    colnames(trans.swap) = c("To", "From")
+    trans = rbind(trans, trans.swap)
   }
   trans.df = unique(trans)
   # try to pull this together into inference for the Mk model
