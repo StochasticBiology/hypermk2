@@ -21,12 +21,12 @@ hypermk2_independent = function(m,
       #this.fit = hypermk2(this.f, tree, nwalker = 1, ...)
       fit.set[[i]] = hypermk::mk_infer_phylogenetic(this.f, tree, ...)
       res.df = rbind(res.df, data.frame(feature=i, 
-                                        loglik = fit.set[[i]]$fitted_mk$loglikelihood, 
+                                        loglikelihood = fit.set[[i]]$fitted_mk$loglikelihood, 
                                         AIC = fit.set[[i]]$fitted_mk$AIC))
     }
   }
   #  res.df = rbind(res.df, data.frame(feature=0, loglik=sum(res.df$loglik), AIC=sum(res.df$AIC)))
-  return(list(loglik =sum(res.df$loglik),
+  return(list(loglikelihood =sum(res.df$loglikelihood),
               AIC = sum(res.df$AIC),
               by.feature = fit.set))
 }
