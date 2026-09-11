@@ -39,6 +39,7 @@ hypermk2_independent = function(m,
 #' @param nwalker Integer (default 10000), the number of random walkers to simulate on the inferred transition network to sample fluxes
 #' @param force.origin Boolean (default FALSE), whether to force the root of the tree to have state 0^L
 #' @param use.null Boolean (default FALSE), whether to use a null model of independent characters
+#' @param prune.space Boolean (default TRUE), whether to actually prune state space. If FALSE, this effectively becomes the original HyperMk approach.
 #' @param cheap.space Boolean (default FALSE), whether to use the cheap state space reduction algorithm or the one with local consistency
 #' @param expand.uncertainty Boolean (default TRUE) In cases with uncertain data, whether to retain transitions to all possible instances of the uncertain states (TRUE) or just one sample (FALSE)
 #'
@@ -54,6 +55,7 @@ hypermk2 = function(m,
                     nwalker=10000,
                     force.origin = FALSE,
                     use.null = FALSE,
+                    prune.space = TRUE,
                     cheap.space = FALSE,
                     expand.uncertainty = TRUE) {
   verbose = FALSE
@@ -93,6 +95,15 @@ hypermk2 = function(m,
     }
   }
   
+  if(prune.space == FALSE) {
+    message("Avoiding building reduced state space...")
+    nodes <- 0:(2^L - 1)
+    flips <- 2^(0:(L - 1))
+    
+    From <- rep(nodes, each = L)
+    To   <- bitwXor(From, rep(flips, times = length(nodes)))
+    trans = data.frame(From=From, To=To)
+  } else {
   message("Building reduced state space...")
   if(reversible == FALSE) {
     mstr = apply(m, 1, paste0, collapse = "")
@@ -116,6 +127,7 @@ hypermk2 = function(m,
     } else {
       trans = cheap_transition_set(m, tree, force.origin)
     }
+  }
   }
   
   trans.df = trans
