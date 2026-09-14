@@ -2,6 +2,7 @@ library(hyperdags)
 library(hyperinf)
 library(ggraph)
 library(ggpubr)
+library(ggbeeswarm)
 library(hypermk2)
 
 sf = 2
@@ -30,6 +31,31 @@ states = build_states(data, tree)
 set.seed(1)
 sample_states(tree, states)
 
+
+aic.lin.df = data.frame()
+tmp = do.call(rbind, lapply(fit, hyperinf_AIC))
+tmp$Model = "All reversible"
+aic.lin.df = rbind(aic.lin.df, tmp)
+tmp = do.call(rbind, lapply(fit.r, hyperinf_AIC))
+tmp$Model = "Default"
+aic.lin.df = rbind(aic.lin.df, tmp)
+tmp = do.call(rbind, lapply(fit.0, hyperinf_AIC))
+tmp$Model = "Independent"
+aic.lin.df = rbind(aic.lin.df, tmp)
+
+plot.models.lin = ggarrange(plot_hyperinf_data(m, tree),
+                        ggarrange(
+                          ggplot(aic.lin.df, aes(x = Model, y=loglik)) + geom_beeswarm(),
+                          ggplot(aic.lin.df, aes(x = Model, y=AIC)) + geom_beeswarm(), 
+                          nrow = 2, labels=c("B", "C")),
+                        labels=c("A", "")
+)
+
+png("plot-model-type-lin.png", width = 600*sf, height = 300*sf, res=72*sf)
+print(plot.models.lin)
+dev.off()
+
+
 #### bilinear dynamics, compare reversible and irreversible Mk2
 
 set.seed(5)
@@ -41,7 +67,7 @@ plot_hyperinf_data(m, tree)
 fit = fit.r = fit.0 = list()
 for(i in 1:10) {
   fit[[i]] = hyperinf(m, tree, method="hypermk2", reversible = FALSE)
-  fit.r[[i]] = hyperinf(m, tree, method="hypermk2")
+  fit.r[[i]] = hyperinf(m, tree, method="hypermk2", reverse.all=TRUE)
   fit.0[[i]] = hyperinf(m, tree, method="hypermk2", use.null = TRUE)
 }
 
@@ -105,7 +131,7 @@ fit.mk.ir = hyperinf(m, tree, method="hypermk", reversible = FALSE)
 
 fit.mk2 = fit.mk2.0 = fit.mk2.ir = list()
 for(i in 1:10) {
-  fit.mk2[[i]] = hyperinf(m, tree, method="hypermk2")
+  fit.mk2[[i]] = hyperinf(m, tree, method="hypermk2", reverse.all=TRUE)
   fit.mk2.0[[i]] = hyperinf(m, tree, method="hypermk2", use.null= TRUE)
   fit.mk2.ir[[i]] = hyperinf(m, tree, method="hypermk2", reversible = FALSE)
 }
@@ -174,3 +200,47 @@ hyperinf_AIC(fit.mk)
 hyperinf_AIC(fit.mk2[[1]])
 plot_hyperinf(fit.mk)
 plot_hyperinf(fit.mk2[[1]])
+
+
+###### random dynamics, looking at AIC (dis)advantage of making all transitions reversible
+
+set.seed(5)
+sim.dyn = simulate_accumulation(50, 4, dynamics="random")
+tree = sim.dyn$my.tree
+m <- do.call(rbind, sim.dyn$x)[1:length(sim.dyn$my.tree$tip.label),]
+m = matrix(rbinom(50*4, 1, 0.5), nrow=50)
+rownames(m) = tree$tip.label
+
+plot_hyperinf_data(m, tree)
+
+fit.mk2.f = fit.mk2 = fit.mk2.0 = fit.mk2.ir = list()
+for(i in 1:10) {
+  fit.mk2.f[[i]] = hyperinf(m, tree, method="hypermk2")
+  fit.mk2[[i]] = hyperinf(m, tree, method="hypermk2", reverse.all=TRUE)
+  fit.mk2.0[[i]] = hyperinf(m, tree, method="hypermk2", use.null= TRUE)
+  fit.mk2.ir[[i]] = hyperinf(m, tree, method="hypermk2", reversible = FALSE)
+}
+
+aic.df = data.frame()
+tmp = do.call(rbind, lapply(fit.mk2, hyperinf_AIC))
+tmp$Model = "All reversible"
+aic.df = rbind(aic.df, tmp)
+tmp = do.call(rbind, lapply(fit.mk2.f, hyperinf_AIC))
+tmp$Model = "Default"
+aic.df = rbind(aic.df, tmp)
+tmp = do.call(rbind, lapply(fit.mk2.0, hyperinf_AIC))
+tmp$Model = "Independent"
+aic.df = rbind(aic.df, tmp)
+
+plot.models = ggarrange(plot_hyperinf_data(m, tree),
+          ggarrange(
+          ggplot(aic.df, aes(x = Model, y=loglik)) + geom_beeswarm(),
+ggplot(aic.df, aes(x = Model, y=AIC)) + geom_beeswarm(), 
+nrow = 2, labels=c("B", "C")),
+labels=c("A", "")
+)
+
+png("plot-model-type.png", width = 600*sf, height = 300*sf, res=72*sf)
+print(plot.models)
+dev.off()
+

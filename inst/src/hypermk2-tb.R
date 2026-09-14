@@ -39,20 +39,27 @@ prune.tree = keep.tip(tree, small.df$Isolate)
 plot_hyperinf_data(small.df, prune.tree)
 
 fit.tb.small = list()
+fit.tb.small.nora = list()
 if(run.inference == TRUE) {
   for(i in 1:10) {
-    fit.tb.small[[i]] = hyperinf(small.df, prune.tree, method="hypermk2")
+    fit.tb.small[[i]] = hyperinf(small.df, prune.tree, method="hypermk2", reverse.all=TRUE)
   }
+  for(i in 1:10) {
+    fit.tb.small.nora[[i]] = hyperinf(small.df, prune.tree, method="hypermk2")
+  }
+  fit.tb.small.null = hyperinf(small.df, prune.tree, method="hypermk2", use.null = TRUE)
   fit.hmm = hyperinf(small.df, prune.tree)
   fit.ht = hyperinf(small.df, prune.tree, method = "hypertraps")
   
   fits = list(fit.tb.small = fit.tb.small,
+              fit.tb.small.nora = fit.tb.small.nora,
+              fit.tb.small.null = fit.tb.small.null,
               fit.hmm = fit.hmm,
               fit.ht = fit.ht)
-  save(fits, file="hypermk2-tb-fits-many.Rdata")
+  save(fits, file="hypermk2-revall-tb-fits-many.Rdata")
 }
 
-load("hypermk2-tb-fits-many.Rdata")
+load("hypermk2-revall-tb-fits-many.Rdata")
 fit.tb.small = fits$fit.tb.small
 fit.hmm = fits$fit.hmm
 fit.ht = fits$fit.ht

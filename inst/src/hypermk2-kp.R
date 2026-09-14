@@ -3,8 +3,8 @@ library(hyperinf)
 run.inference = TRUE
 n.samples = 1
 
-load("kp-test-data.Rdata")
-load("kp-test-tree.Rdata")
+load("inst/data/kp-test-data.Rdata")
+load("inst/data/kp-test-tree.Rdata")
 
 rownames(m) = tree$tip.label
 
@@ -12,19 +12,19 @@ fit.hmk2 = fit.hmk21 = list()
 if(run.inference == TRUE) {
   
   for(i in 1:n.samples) {
-  fit.hmk2[[i]] = hyperinf(m, tree, reversible=TRUE)
-  fit.hmk21[[i]] = hyperinf(m, tree, reversible=TRUE, force.origin=TRUE)
+  fit.hmk2[[i]] = hyperinf(m, tree, reversible=TRUE, method="hypermk2", reverse.all = TRUE)
+  fit.hmk21[[i]] = hyperinf(m, tree, reversible=TRUE, method="hypermk2", reverse.all = TRUE, force.origin=TRUE)
   }
   
-  load("kp-hypertraps-fit.Rdata")
+  load("inst/src/kp-hypertraps-fit.Rdata")
   res.tmp$feature.names = res.tmp$featurenames
   fit.ht = res.tmp
   
   fit.set = list(fit.hmk2, fit.hmk21, fit.ht)
-  save(fit.set, file="fits-kp-test-hmk2-hmk21-ht-many.Rdata")
+  save(fit.set, file="fits-kp-test-hmk2-hmk21-ht-revall-many.Rdata")
 }
 
-load("fits-kp-test-hmk2-hmk21-ht-many.Rdata")
+load("fits-kp-test-hmk2-hmk21-ht-revall-many.Rdata")
 fit.hmk2 = fit.set[[1]]
 fit.hmk21 = fit.set[[2]]
 fit.ht = fit.set[[3]]
