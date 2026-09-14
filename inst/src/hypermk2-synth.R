@@ -42,7 +42,7 @@ fit = fit.r = fit.0 = list()
 for(i in 1:10) {
   fit[[i]] = hyperinf(m, tree, method="hypermk2", reversible = FALSE)
   fit.r[[i]] = hyperinf(m, tree, method="hypermk2")
-  fit.0[[i]] = hyperinf(m, tree, method="hypermk2", compare.null = TRUE)
+  fit.0[[i]] = hyperinf(m, tree, method="hypermk2", use.null = TRUE)
 }
 
 # visualise transition graphs from different instances
@@ -106,7 +106,7 @@ fit.mk.ir = hyperinf(m, tree, method="hypermk", reversible = FALSE)
 fit.mk2 = fit.mk2.0 = fit.mk2.ir = list()
 for(i in 1:10) {
   fit.mk2[[i]] = hyperinf(m, tree, method="hypermk2")
-  fit.mk2.0[[i]] = hyperinf(m, tree, method="hypermk2", compare.null= TRUE)
+  fit.mk2.0[[i]] = hyperinf(m, tree, method="hypermk2", use.null= TRUE)
   fit.mk2.ir[[i]] = hyperinf(m, tree, method="hypermk2", reversible = FALSE)
 }
 
