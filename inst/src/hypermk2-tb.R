@@ -60,9 +60,33 @@ if(run.inference == TRUE) {
 }
 
 load("hypermk2-revall-tb-fits-many.Rdata")
+
 fit.tb.small = fits$fit.tb.small
+fit.tb.small.nora = fits$fit.tb.small.nora
+fit.tb.small.null = fits$fit.tb.small.null
+
 fit.hmm = fits$fit.hmm
 fit.ht = fits$fit.ht
+
+
+aic.df = data.frame()
+tmp = do.call(rbind, lapply(fit.tb.small, hyperinf_AIC))
+tmp$Model = "All reversible"
+aic.df = rbind(aic.df, tmp)
+tmp = do.call(rbind, lapply(fit.tb.small.nora, hyperinf_AIC))
+tmp$Model = "Default"
+aic.df = rbind(aic.df, tmp)
+tmp = hyperinf_AIC(fit.tb.small.null)
+tmp$Model = "Null"
+aic.df = rbind(aic.df, tmp)
+
+plot.models = ggarrange(plot_hyperinf_data(small.df, prune.tree),
+                        ggarrange(
+                          ggplot(aic.df, aes(x = Model, y=loglik)) + geom_beeswarm(),
+                          ggplot(aic.df, aes(x = Model, y=AIC)) + geom_beeswarm(), 
+                          nrow = 2, labels=c("B", "C")),
+                        labels=c("A", "")
+)
 
 # simply returns a binary (character string) of length len from a decimal
 DecToBinS <- function(x, len) {
