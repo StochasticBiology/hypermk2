@@ -24,7 +24,7 @@ if(run.inference == TRUE) {
   save(fit.set, file="fits-kp-test-hmk2-hmk21-ht-many.Rdata")
 }
 
-load("fits-kp-test-hmk2-hmk21-ht.Rdata")
+load("fits-kp-test-hmk2-hmk21-ht-many.Rdata")
 fit.hmk2 = fit.set[[1]]
 fit.hmk21 = fit.set[[2]]
 fit.ht = fit.set[[3]]
