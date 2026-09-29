@@ -64,7 +64,9 @@ hypermk2 = function(m,
   n = length(tree$tip.label)
   L = ncol(m)
   
-  if(is.na(sum(m))) {
+  m[is.na(m)] = 0.5
+  
+  if(any(m > 0 & m < 1)) {
     no.uncertainty = FALSE
   } else {
     no.uncertainty = TRUE
@@ -108,6 +110,10 @@ hypermk2 = function(m,
   } else {
   message("Building reduced state space...")
   if(reversible == FALSE) {
+    if(no.uncertainty == FALSE) {
+      message("Can't do irreversible model with uncertainty (yet)")
+      return(NULL)
+    }
     mstr = apply(m, 1, paste0, collapse = "")
     arb = hyperdags::simplest_arborescence(mstr)
     g = arb$rewired.graph
@@ -117,7 +123,9 @@ hypermk2 = function(m,
   }
   if(reversible == TRUE) {
     if(cheap.space == FALSE) {
-      state.set = build_states(m, tree)
+      mprime = m
+      mprime[m > 0 & m < 1] = NA
+      state.set = build_states(mprime, tree)
       sample.states = sample_states(tree, state.set, expand.uncertainty = expand.uncertainty)
       trans = sample.states$edges
       if(force.origin == TRUE) {
@@ -127,7 +135,7 @@ hypermk2 = function(m,
       
       trans = trans[trans$From != trans$To,]
     } else {
-      trans = cheap_transition_set(m, tree, force.origin)
+      trans = cheap_transition_set(mprime, tree, force.origin)
     }
   }
   }
@@ -182,13 +190,26 @@ hypermk2 = function(m,
                                  tip_states = stateobs, rate_model = Q)
     }
   } else {
+    # uncertain case. construct priors on tips
     tip_priors = matrix(0, nrow=length(tree$tip.label), ncol = length(stateset))
     for(i in 1:nrow(m)) {
-      this.set = expand_disagreements(m[i,], m[i,])
+      this.set.list = expand_disagreements(m[i,], m[i,], probs = TRUE)
+      this.set = this.set.list$states
+      this.set.probs = this.set.list$probs
       this.set.dec = unlist(lapply(this.set, bin_to_dec))
-      this.set.state.refs = which(stateset %in% this.set.dec)
-      tip_priors[i,this.set.state.refs] = 1/length(this.set.state.refs)
+      for(j in 1:length(this.set.dec)) {
+        ref = which(stateset == this.set.dec[j])
+        tip_priors[i, ref] = this.set.probs[j]
+      }
+#      this.set.state.refs = which(stateset %in% this.set.dec)
+#      tip_priors[i,this.set.state.refs] = 1/length(this.set.state.refs)
     }
+    message("--- TIP PRIORS")
+    for(i in 1:nrow(m)) {
+    message(paste0(tip_priors[i,], sep = " "))
+    }
+    message("--- STATESET")
+    message(paste0(stateset, sep = " "))
     
     trees = tree
     Nstates = length(stateset)

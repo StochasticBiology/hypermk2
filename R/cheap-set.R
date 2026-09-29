@@ -1,19 +1,41 @@
 # get the set of binary vectors where every disagreed bit between x and y is expanded into both 0 and 1
-expand_disagreements <- function(x, y) {
+expand_disagreements <- function(x, y, probs = FALSE) {
   stopifnot(length(x) == length(y))
+  
+  xprime = x
+  yprime = y
+  xprime[xprime > 0 & xprime < 1] = NA
+  yprime[yprime > 0 & yprime < 1] = NA
   
   # For each position, keep either the single value (if equal)
   # or both values (if different)
   choices <- Map(function(a, b) {
     if (is.na(a+b)) c(0,1) else if (a == b) a else c(0, 1)
-  }, x, y)
+  }, xprime, yprime)
   
   # Generate all combinations
   combos <- expand.grid(choices)
   
   # Convert rows to vectors
   result <- split(as.matrix(combos), seq(nrow(combos)))
-  lapply(result, as.numeric)
+  to.return = lapply(result, as.numeric)
+  if(probs == FALSE) {
+    return(to.return)
+  }
+  
+  if(any(x != y)) {
+    message("Probabilistic expansion with different vector inputs doesn't work!")
+    return(NULL)
+  }
+  p = x
+  mat = as.matrix(combos)
+  # compute probabilities row-wise
+  # each row z: prod(p^z * (1-p)^(1-z))
+  prob_vec <- apply(mat, 1, function(z) {
+    prod(p^z * (1 - p)^(1 - z))
+  })
+  
+  list(states = to.return, probs = prob_vec)
 }
 
 closest_by_hamming <- function(lst, target) {
